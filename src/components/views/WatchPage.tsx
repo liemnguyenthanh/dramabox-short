@@ -26,7 +26,7 @@ export function WatchPage() {
   const [duration, setDuration] = React.useState(0)
   const [buffering, setBuffering] = React.useState(false)
 
-  const [proxyMode, setProxyMode] = React.useState<"signed" | "proxy">("signed")
+  const [proxyMode, setProxyMode] = React.useState<"signed" | "proxy" | "decrypt">("signed")
   const videoRef = React.useRef<HTMLVideoElement>(null)
   const controlsTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -67,13 +67,17 @@ export function WatchPage() {
       if (proxyMode === "proxy") {
         return `${PROXY_BASE}/stream?url=${encodeURIComponent(playable.url)}`
       }
+      if (proxyMode === "decrypt") {
+        return `${PROXY_BASE}/decrypt?url=${encodeURIComponent(playable.url)}`
+      }
       return playable.url
     }
     // fallback: try first cdn
     const cdn = ep.cdnList?.[0]
     const v = cdn?.videoPathList?.[0]
     if (v) {
-      return `${PROXY_BASE}/stream?url=${encodeURIComponent(v.videoPath)}`
+      const endpoint = proxyMode === "decrypt" ? "decrypt" : "stream"
+      return `${PROXY_BASE}/${endpoint}?url=${encodeURIComponent(v.videoPath)}`
     }
     return null
   }
@@ -327,6 +331,14 @@ export function WatchPage() {
                       }`}
                     >
                       Proxy
+                    </button>
+                    <button
+                      onClick={() => setProxyMode("decrypt")}
+                      className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                        proxyMode === "decrypt" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Decrypt
                     </button>
                   </div>
                   <Button size="icon-sm" variant="outline" title="Tải lại" onClick={() => { setProxyMode("signed"); loadEpisode(currentIdx) }}>

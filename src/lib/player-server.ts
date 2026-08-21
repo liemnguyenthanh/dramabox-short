@@ -61,3 +61,11 @@ export function isAllowedVideoUrl(value: string) {
 export async function proxyVideo(targetUrl: string, range: string | null) {
   return fetch(targetUrl, { headers: cdnHeaders(range ? { Range: range } : {}), signal: AbortSignal.timeout(60000) })
 }
+
+export async function decryptVideo(targetUrl: string) {
+  const decryptUrl = `${API_BASE}/decrypt-stream?url=${encodeURIComponent(targetUrl)}`
+  return fetch(decryptUrl, {
+    headers: apiHeaders(),
+    signal: AbortSignal.timeout(60000),
+  })
+}
