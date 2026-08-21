@@ -8,7 +8,7 @@ import { useApp } from "@/context/AppContext"
 import { fetchEpisodes } from "@/lib/api"
 import type { Episode, EpisodesResponse } from "@/types/drama"
 
-const PROXY_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dramabox`
+const PROXY_BASE = "/api/player"
 
 export function WatchPage() {
   const { viewParams, navigateTo } = useApp()
@@ -65,7 +65,7 @@ export function WatchPage() {
     const playable = ep._playable
     if (playable) {
       if (proxyMode === "proxy") {
-        return `${PROXY_BASE}/proxy?url=${encodeURIComponent(playable.url)}`
+        return `${PROXY_BASE}/stream?url=${encodeURIComponent(playable.url)}`
       }
       return playable.url
     }
@@ -73,7 +73,7 @@ export function WatchPage() {
     const cdn = ep.cdnList?.[0]
     const v = cdn?.videoPathList?.[0]
     if (v) {
-      return `${PROXY_BASE}/proxy?url=${encodeURIComponent(v.videoPath)}`
+      return `${PROXY_BASE}/stream?url=${encodeURIComponent(v.videoPath)}`
     }
     return null
   }
