@@ -25,11 +25,12 @@ export const LANGUAGES: Language[] = [
 const STORAGE_KEY = "drama-language"
 
 export function getStoredLanguage(): Language {
-  const stored = localStorage.getItem(STORAGE_KEY)
+  if (typeof window === "undefined") return "vi"
+  const stored = window.localStorage.getItem(STORAGE_KEY)
   if (stored && LANGUAGES.includes(stored as Language)) return stored as Language
   return "vi"
 }
 
 export function setStoredLanguage(lang: Language) {
-  localStorage.setItem(STORAGE_KEY, lang)
+  if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, lang)
 }
