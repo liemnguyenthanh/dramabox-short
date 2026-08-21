@@ -27,26 +27,46 @@ export async function testVideoUrl(url: string) {
   } catch { return null }
 }
 
+// src/lib/player-server.ts
+
+const METADATA_CACHE_SECONDS = 300
+
+function scoreCandidate(video: any) {
+  const quality = Number.parseInt(video.quality, 10)
+  return (
+    (quality === 720 ? 100 : quality === 540 ? 80 : quality === 360 ? 60 : quality === 1080 ? 40 : 20) +
+    (!video.isVipEquity ? 50 : 0) +
+    (video.isDefault ? 10 : 0)
+  )
+}
+
+function annotateEpisode(episode: any) {
+  const candidates = (episode.cdnList || [])
+    .flatMap((cdn: any) =>
+      (cdn.videoPathList || []).map((video: any) => ({
+        score: scoreCandidate(video),
+        url: video.videoPath,
+        cdn: cdn.cdnDomain,
+        quality: video.quality,
+        isVip: video.isVipEquity === 1,
+      })),
+    )
+    .sort((a: any, b: any) => b.score - a.score)
+
+  const best = candidates[0] ?? null
+  return { ...episode, _playable: best }
+}
+
 export async function getEpisodes(bookId: string) {
-  const response = await fetch(`${API_BASE}/allepisode?bookId=${bookId}`, { headers: apiHeaders(), signal: AbortSignal.timeout(20000), cache: "no-store" })
+  const response = await fetch(`${API_BASE}/allepisode?bookId=${bookId}`, {
+    headers: apiHeaders(),
+    signal: AbortSignal.timeout(15000),
+    next: { revalidate: METADATA_CACHE_SECONDS },
+  })
   if (!response.ok) throw new Error(`Nguồn phim trả HTTP ${response.status}`)
   const episodes = await response.json()
   if (!Array.isArray(episodes)) throw new Error("Nguồn phim trả dữ liệu không hợp lệ")
-  const annotated = []
-  for (const episode of episodes) {
-    const candidates = (episode.cdnList || []).flatMap((cdn: any) => (cdn.videoPathList || []).map((video: any) => {
-      const quality = Number.parseInt(video.quality, 10)
-      const score = (quality === 720 ? 100 : quality === 540 ? 80 : quality === 360 ? 60 : quality === 1080 ? 40 : 20) + (!video.isVipEquity ? 50 : 0) + (video.isDefault ? 10 : 0)
-      return { score, url: video.videoPath, cdn: cdn.cdnDomain, quality: video.quality, isVip: video.isVipEquity === 1 }
-    })).sort((a: any, b: any) => b.score - a.score)
-    let playable = null
-    for (const candidate of candidates) {
-      const size = await testVideoUrl(candidate.url)
-      if (size !== null) { playable = { url: candidate.url, cdn: candidate.cdn, quality: candidate.quality, isVip: candidate.isVip, size }; break }
-    }
-    annotated.push({ ...episode, _playable: playable })
-  }
-  return annotated
+  return episodes.map(annotateEpisode)
 }
 
 export function isAllowedVideoUrl(value: string) {
