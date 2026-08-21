@@ -1,8 +1,10 @@
+"use client"
+
 import { AppProvider, useApp } from "@/context/AppContext"
 import { Header } from "@/components/Header"
-import { HomePage } from "@/pages/HomePage"
-import { SearchPage } from "@/pages/SearchPage"
-import { WatchPage } from "@/pages/WatchPage"
+import { HomePage } from "@/components/views/HomePage"
+import { SearchPage } from "@/components/views/SearchPage"
+import { WatchPage } from "@/components/views/WatchPage"
 
 function AppContent() {
   const { view } = useApp()

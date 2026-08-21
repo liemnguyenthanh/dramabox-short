@@ -1,7 +1,7 @@
 import type { Language } from "@/types/drama"
 
 const BASE = "https://api.fshort.net/api/v1/dramabox"
-const PLAYER_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dramabox`
+const PLAYER_BASE = "/api/player"
 
 export async function fetchHome(language: Language, pageNo = 1, pageSize = 20) {
   const res = await fetch(
